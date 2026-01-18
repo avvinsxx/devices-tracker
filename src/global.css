@@ -1,0 +1,35 @@
+:root {
+  --font-size-h: 1.25rem;
+  --font-size-text: 1rem;
+
+  --spacing-xs: 2px;
+  --spacing-sm: 4px;
+  --spacing-md: 8px;
+  --spacing-xl: 12px;
+  --spacing-2xl: 16px;
+
+  --bg-surface-dark: #fff;
+  --bg-surface-medium: #fff;
+  --bg-surface-light: #fff;
+
+  --bg-channel-active: blue;
+
+  --text-dark: black;
+  --text-light: gray;
+
+  --color-error: red;
+
+  --rounding-xs: 4px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  line-height: 1;
+}
+
+* {
+  box-sizing: border-box;
+  color: black;
+  font-size: var(--font-size-text);
+}
