@@ -1,14 +1,25 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
 
 import { groups as wsGroups, devices as wsDevices } from '@/data/WsService'
 import { type Group } from '@/types/group'
 import type { Device, DeviceMap } from '@/types/device'
+import { loadFromStorage, saveToStorage } from '@/utils/localStorage'
 
 type Mode = 'online' | 'archive'
 
+const STORAGE_KEYS = {
+  MODE: 'mode',
+  OPENED_GROUPS: 'opened-groups',
+  OPENED_DEVICES: 'opened-devices',
+  SELECTED_DEVICES_ONLINE: 'selected-devices-online',
+  SELECTED_CHANNELS_ONLINE: 'selected-channels-online',
+  SELECTED_DEVICE_ARCHIVE: 'selected-device-archive',
+  SELECTED_CHANNELS_ARCHIVE: 'selected-channels-archive',
+}
+
 export const useStore = defineStore('store', () => {
-  const mode = ref<Mode>('online')
+  const mode = ref<Mode>(loadFromStorage(STORAGE_KEYS.MODE, 'online'))
   function changeMode(newMode: Mode) {
     mode.value = newMode
   }
@@ -17,7 +28,7 @@ export const useStore = defineStore('store', () => {
     mode.value = mode.value === 'online' ? 'archive' : 'online'
   }
 
-  const openedGroups = ref<string[]>([])
+  const openedGroups = ref<string[]>(loadFromStorage(STORAGE_KEYS.OPENED_GROUPS, []))
   function openGroupToggle(groupId: string) {
     if (openedGroups.value.includes(groupId)) {
       openedGroups.value = openedGroups.value.filter((id) => id !== groupId)
@@ -26,7 +37,7 @@ export const useStore = defineStore('store', () => {
     }
   }
 
-  const openedDevices = ref<number[]>([])
+  const openedDevices = ref<number[]>(loadFromStorage(STORAGE_KEYS.OPENED_DEVICES, []))
   function openDeviceToggle(deviceId: number) {
     if (openedDevices.value.includes(deviceId)) {
       openedDevices.value = openedDevices.value.filter((id) => id !== deviceId)
@@ -35,10 +46,18 @@ export const useStore = defineStore('store', () => {
     }
   }
 
-  const selectedDevicesOnline = ref<number[]>([])
-  const selectedChannelsOnline = ref<Record<number, number[]>>({})
-  const selectedDeviceArchive = ref<number>()
-  const selectedChannelsArchive = ref<Record<number, number[]>>({})
+  const selectedDevicesOnline = ref<number[]>(
+    loadFromStorage(STORAGE_KEYS.SELECTED_DEVICES_ONLINE, []),
+  )
+  const selectedChannelsOnline = ref<Record<number, number[]>>(
+    loadFromStorage(STORAGE_KEYS.SELECTED_CHANNELS_ONLINE, {}),
+  )
+  const selectedDeviceArchive = ref<number | undefined>(
+    loadFromStorage(STORAGE_KEYS.SELECTED_DEVICE_ARCHIVE, undefined),
+  )
+  const selectedChannelsArchive = ref<Record<number, number[]>>(
+    loadFromStorage(STORAGE_KEYS.SELECTED_CHANNELS_ARCHIVE, {}),
+  )
 
   function selectDevice(deviceId: number) {
     if (mode.value === 'online') {
@@ -131,6 +150,54 @@ export const useStore = defineStore('store', () => {
       )
       .map((id) => wsDevices[Number(id)])
   })
+
+  watch(mode, (newMode) => {
+    saveToStorage(STORAGE_KEYS.MODE, newMode)
+  })
+
+  watch(
+    openedGroups,
+    (newGroups) => {
+      saveToStorage(STORAGE_KEYS.OPENED_GROUPS, newGroups)
+    },
+    { deep: true },
+  )
+
+  watch(
+    openedDevices,
+    (newDevices) => {
+      saveToStorage(STORAGE_KEYS.OPENED_DEVICES, newDevices)
+    },
+    { deep: true },
+  )
+
+  watch(
+    selectedDevicesOnline,
+    (newSelected) => {
+      saveToStorage(STORAGE_KEYS.SELECTED_DEVICES_ONLINE, newSelected)
+    },
+    { deep: true },
+  )
+
+  watch(
+    selectedChannelsOnline,
+    (newChannels) => {
+      saveToStorage(STORAGE_KEYS.SELECTED_CHANNELS_ONLINE, newChannels)
+    },
+    { deep: true },
+  )
+
+  watch(selectedDeviceArchive, (newDevice) => {
+    saveToStorage(STORAGE_KEYS.SELECTED_DEVICE_ARCHIVE, newDevice)
+  })
+
+  watch(
+    selectedChannelsArchive,
+    (newChannels) => {
+      saveToStorage(STORAGE_KEYS.SELECTED_CHANNELS_ARCHIVE, newChannels)
+    },
+    { deep: true },
+  )
 
   return {
     selectedDevicesOnline,
