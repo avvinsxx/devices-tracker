@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 
 import { groups as wsGroups, devices as wsDevices } from '@/data/WsService'
 import { type Group } from '@/types/group'
-import type { Device } from '@/types/device'
+import type { Device, DeviceMap } from '@/types/device'
 
 type Mode = 'online' | 'archive'
 
@@ -121,7 +121,19 @@ export const useStore = defineStore('store', () => {
     return !!selectedDeviceArchive.value
   })
 
+  const devicesForMap = computed<DeviceMap[]>(() => {
+    console.log('aaa')
+    return Object.keys(wsDevices)
+      .filter((id) =>
+        mode.value === 'online'
+          ? selectedDevicesOnline.value.includes(Number(id))
+          : selectedDeviceArchive.value === Number(id),
+      )
+      .map((id) => wsDevices[Number(id)])
+  })
+
   return {
+    selectedDevicesOnline,
     mode,
     changeMode,
     toggleMode,
@@ -132,5 +144,6 @@ export const useStore = defineStore('store', () => {
     selectDevice,
     selectChannel,
     hasSelectedArchiveDevice,
+    devicesForMap,
   }
 })

@@ -8,9 +8,19 @@ export type Device = {
   alarm: boolean
   lat: number
   lon: number
-  //   channels: number[]
 
   isOpen: boolean
   selected: boolean
   channels: Channel[]
+}
+
+export type DeviceMap = {
+  id: number
+  name: string
+  timestamp: string
+  wifi: number
+  alarm: boolean
+  lat: number
+  lon: number
+  channels: number
 }

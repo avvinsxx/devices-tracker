@@ -13,6 +13,8 @@
   --bg-surface-light: #fff;
 
   --bg-channel-active: blue;
+  --marker: blue;
+  --marker-alarm: red;
 
   --text-dark: black;
   --text-light: gray;
@@ -32,4 +34,5 @@ body {
   box-sizing: border-box;
   color: black;
   font-size: var(--font-size-text);
+  margin: 0;
 }

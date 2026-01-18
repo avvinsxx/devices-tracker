@@ -32,7 +32,9 @@ function onOpen() {
             <v-icon name="co-caret-bottom" color="green" />
           </button>
           <input
-            :disabled="store.hasSelectedArchiveDevice && !device.selected"
+            :disabled="
+              store.mode === 'archive' && store.hasSelectedArchiveDevice && !device.selected
+            "
             :id="`device-${device.id}`"
             type="checkbox"
             :checked="device.selected"
