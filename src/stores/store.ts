@@ -76,18 +76,16 @@ export const useStore = defineStore('store', () => {
   }
 
   function selectChannel(deviceId: number, channel: number) {
-    if (mode.value === 'online') {
-      if (!selectedChannelsOnline.value.hasOwnProperty(deviceId)) {
-        selectedChannelsOnline.value[deviceId] = []
-      }
-      const selectedChannels = selectedChannelsOnline.value[deviceId]
-      if (selectedChannels?.includes(channel)) {
-        selectedChannelsOnline.value[deviceId] = selectedChannels.filter((id) => id !== channel)
-      } else {
-        selectedChannelsOnline.value[deviceId]?.push(channel)
-      }
+    const selectedChannels =
+      mode.value === 'online' ? selectedChannelsOnline : selectedChannelsArchive
+    if (!selectedChannels.value.hasOwnProperty(deviceId)) {
+      selectedChannels.value[deviceId] = []
+    }
+    const deviceSelectedChannels = selectedChannels.value[deviceId]
+    if (deviceSelectedChannels?.includes(channel)) {
+      selectedChannels.value[deviceId] = deviceSelectedChannels.filter((id) => id !== channel)
     } else {
-      selectedDeviceArchive.value = deviceId
+      selectedChannels.value[deviceId]?.push(channel)
     }
   }
 
@@ -105,7 +103,9 @@ export const useStore = defineStore('store', () => {
         channels: Array.from({ length: wsDevices[id].channels }, (_, index) => ({
           number: index + 1,
           selected:
-            mode.value === 'online' ? selectedChannelsOnline.value[id]?.includes(index + 1) : false,
+            mode.value === 'online'
+              ? selectedChannelsOnline.value[id]?.includes(index + 1)
+              : selectedChannelsArchive.value[id]?.includes(index + 1),
         })),
       })),
     }))
@@ -136,8 +136,8 @@ export const useStore = defineStore('store', () => {
       })
   })
 
-  const hasSelectedArchiveDevice = computed<boolean>(() => {
-    return !!selectedDeviceArchive.value
+  const canAddNewDevice = computed<boolean>(() => {
+    return mode.value === 'online' || (mode.value === 'archive' && !selectedDeviceArchive.value)
   })
 
   const devicesForMap = computed<DeviceMap[]>(() => {
@@ -210,7 +210,7 @@ export const useStore = defineStore('store', () => {
     openDeviceToggle,
     selectDevice,
     selectChannel,
-    hasSelectedArchiveDevice,
+    canAddNewDevice,
     devicesForMap,
   }
 })
