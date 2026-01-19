@@ -11,6 +11,6 @@ export const saveToStorage = (key: string, value: unknown) => {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch (error) {
-    console.error(`Failed to save ${key} to localStorage:`, error)
+    console.error(`Ошибка сохранения ${key} в localStorage:`, error)
   }
 }
