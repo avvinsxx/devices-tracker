@@ -139,7 +139,7 @@ export const useStore = defineStore('store', () => {
             selected:
               mode.value === 'online'
                 ? !!selectedChannelsOnline.value[numId]?.includes(index + 1)
-                : !!selectedChannelsArchive.value[id]?.includes(index + 1),
+                : !!selectedChannelsArchive.value[numId]?.includes(index + 1),
           })),
         }
       })

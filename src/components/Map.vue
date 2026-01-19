@@ -1,26 +1,36 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import type { Placemark } from 'yandex-maps'
 
 import { useStore } from '@/stores/store'
-import { calculateDeviceBounds } from '@/utils/map'
+import { calculateDeviceBounds, loadYmaps } from '@/utils/map'
+import type ymaps from 'yandex-maps'
 
 const store = useStore()
 const markers = new Map<number, Placemark>()
-
-const ymaps = window.ymaps
-ymaps.ready(init)
-
 const mapLoaded = ref(false)
+
+let ymapsApi: typeof ymaps
 let map: ymaps.Map
-function init() {
-  map = new ymaps.Map('map', {
+
+function initMap() {
+  ymapsApi = window.ymaps
+  map = new ymapsApi.Map('map', {
     center: [55.76, 37.64],
     controls: [],
     zoom: 7,
   })
   mapLoaded.value = true
 }
+
+onMounted(async () => {
+  try {
+    await loadYmaps()
+    initMap()
+  } catch (error) {
+    console.error('Ошибка загрузки Яндекс Карт:', error)
+  }
+})
 
 watch(
   [() => store.devicesForMap, () => store.mode, () => mapLoaded.value],
@@ -36,7 +46,7 @@ watch(
 
       for (const device of newDevices) {
         if (!markers.has(device.id)) {
-          const deviceMarker = new ymaps.Placemark(
+          const deviceMarker = new ymapsApi.Placemark(
             [device.lat, device.lon],
             {
               balloonContent: `
@@ -51,7 +61,7 @@ watch(
             {
               iconImageHref: '',
               iconLayout: 'default#imageWithContent',
-              iconContentLayout: ymaps.templateLayoutFactory.createClass(
+              iconContentLayout: ymapsApi.templateLayoutFactory.createClass(
                 `<div class="map__marker ${store.mode === 'online' && device.alarm ? 'map__marker_alarm' : ''}"></div>`,
               ),
               iconContentOffset: [-10, -10],
