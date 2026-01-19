@@ -21,12 +21,16 @@ const store = useStore()
 <style scoped>
 .sidebar {
   width: 300px;
-  background-color: cadetblue;
+  background-color: var(--bg-surface-light);
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-2xl);
   flex-direction: column;
-  padding: 12px;
+  padding: var(--spacing-xl);
   height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: var(--shadow-1);
+  z-index: 1;
 }
 
 .sidebar__mode {
@@ -36,6 +40,6 @@ const store = useStore()
 .sidebar__devices {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-xl);
 }
 </style>

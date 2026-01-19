@@ -2,6 +2,7 @@
 import { useStore } from '@/stores/store'
 import { type Group } from '@/types/group'
 import Device from './Device.vue'
+import CaretIcon from './Icons/CaretIcon.vue'
 
 const { group } = defineProps<{ group: Group }>()
 
@@ -21,12 +22,8 @@ function onOpen() {
       role="button"
       tabindex="0"
     >
-      {{ group.name
-      }}<v-icon
-        name="co-caret-bottom"
-        class="group__caret"
-        :class="{ group__caret_open: group.isOpen }"
-      />
+      {{ group.name }}
+      <CaretIcon :size="16" class="group__caret" :class="{ group__caret_open: group.isOpen }" />
     </div>
     <div v-if="group.isOpen" class="group__body">
       <Device v-for="device in group.devices" :device="device" :key="device.id" />
@@ -36,24 +33,24 @@ function onOpen() {
 
 <style scoped>
 .group {
-  border: 1px solid red;
+  box-shadow: var(--shadow-1);
 }
 
 .group__header {
-  background-color: red;
+  background-color: var(--bg-surface-dark);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
+  padding: var(--spacing-md);
   cursor: pointer;
   font-size: var(--font-size-h);
 }
 
 .group__body {
-  padding: 8px;
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-md);
 }
 
 .group__caret {

@@ -5,6 +5,8 @@ import Channel from './Channel.vue'
 import Wifi from './Wifi.vue'
 import Alarm from './Alarm.vue'
 import Actions from './Actions.vue'
+import TruckIcon from './Icons/TruckIcon.vue'
+import CaretIcon from './Icons/CaretIcon.vue'
 
 const { device } = defineProps<{ device: Device }>()
 
@@ -29,24 +31,27 @@ function onOpen() {
             class="device__openButton"
             :class="{ device__openButton_opened: device.isOpen }"
           >
-            <v-icon name="co-caret-bottom" color="green" />
+            <CaretIcon :size="16" />
           </button>
+
           <input
-            :disabled="
-              store.mode === 'archive' && store.hasSelectedArchiveDevice && !device.selected
-            "
+            :disabled="!store.canAddNewDevice && !device.selected"
             :id="`device-${device.id}`"
             type="checkbox"
             :checked="device.selected"
             @change="onChange"
           />
-          <label :for="`device-${device.id}`" :title="device.name" class="device__name">{{
-            device.name
-          }}</label>
+          <label
+            :for="`device-${device.id}`"
+            :title="device.name"
+            class="device__name"
+            :class="{ device__name_disabled: !store.canAddNewDevice && !device.selected }"
+            >{{ device.name }}</label
+          >
         </div>
 
         <div class="device__statuses" v-if="store.mode === 'online'">
-          <v-icon name="co-truck" :width="20" :height="20" />
+          <TruckIcon :size="20" class="device__truckIcon" />
           <Wifi :strength="device.wifi" />
           <Alarm v-if="device.alarm" />
         </div>
@@ -76,27 +81,44 @@ function onOpen() {
 .device__deviceInfo {
   display: flex;
   flex-direction: row;
-  gap: 6px;
+  gap: var(--spacing-sm);
+  min-width: 0;
 }
 
 .device__selectBlock {
   display: flex;
   align-items: center;
+  min-width: 0;
+  gap: var(--spacing-xs);
+}
+
+.device__name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+.device__name_disabled {
+  cursor: not-allowed;
 }
 
 .device__statuses {
   display: flex;
   flex-direction: row;
-  gap: 4px;
+  gap: var(--spacing-sm);
   align-items: flex-end;
   align-items: center;
 }
 
+.device__truckIcon {
+  fill: var(--text-dark);
+}
+
 .device__channels {
-  margin-top: 4px;
+  margin-top: var(--spacing-sm);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(20%, 1fr));
-  gap: 8px;
+  gap: var(--spacing-md);
 }
 
 .device__openButton {
@@ -106,16 +128,10 @@ function onOpen() {
   transition: transform 0.3s;
   transform: rotate(-90deg);
   cursor: pointer;
+  display: flex;
 }
 
 .device__openButton_opened {
   transform: rotate(0deg);
-}
-
-.device__name {
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-  flex: 1;
 }
 </style>

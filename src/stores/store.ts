@@ -141,7 +141,6 @@ export const useStore = defineStore('store', () => {
   })
 
   const devicesForMap = computed<DeviceMap[]>(() => {
-    console.log('aaa')
     return Object.keys(wsDevices)
       .filter((id) =>
         mode.value === 'online'

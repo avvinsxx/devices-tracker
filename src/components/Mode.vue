@@ -41,17 +41,18 @@ function onSwitcherClick() {
 <style scoped>
 .mode {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-md);
 }
 
 .mode__label {
-  color: gray;
+  color: var(--text-light);
   border: none;
   background: none;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .mode__label_active {
-  color: black;
+  color: var(--text-dark);
 }
 </style>
