@@ -11,6 +11,7 @@ const store = useStore()
 <template>
   <div class="sidebar">
     <Mode class="sidebar__mode" />
+    <input placeholder="Название или Id" v-model="store.query" class="sidebar__input" />
 
     <div class="sidebar__devices">
       <div v-if="store.isLoading" class="sidebar__loaderContainer"><Loader /></div>
@@ -39,6 +40,12 @@ const store = useStore()
 
 .sidebar__mode {
   align-self: center;
+}
+
+.sidebar__input {
+  padding: 7px 5px;
+  box-shadow: var(--shadow-1);
+  border: none;
 }
 
 .sidebar__devices {

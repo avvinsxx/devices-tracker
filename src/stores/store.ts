@@ -21,6 +21,7 @@ const STORAGE_KEYS = {
 export const useStore = defineStore('store', () => {
   // #region State
   const mode = ref<Mode>(loadFromStorage(STORAGE_KEYS.MODE, 'online'))
+  const query = ref<string>('')
   const openedGroups = ref<string[]>(loadFromStorage(STORAGE_KEYS.OPENED_GROUPS, []))
   const openedDevices = ref<number[]>(loadFromStorage(STORAGE_KEYS.OPENED_DEVICES, []))
   const selectedDevicesOnline = ref<number[]>(
@@ -111,25 +112,34 @@ export const useStore = defineStore('store', () => {
     return websocketStore.groups.map((g) => ({
       ...g,
       isOpen: openedGroups.value.includes(g.id),
-      devices: g.deviceIds.map((id) => {
-        const device = websocketStore.devices?.[id]
-        if (!device) throw new Error(`Устройство ${id} не найдено`)
-        return {
-          ...device,
-          isOpen: openedDevices.value.includes(id),
-          selected:
-            mode.value === 'online'
-              ? selectedDevicesOnline.value.includes(id)
-              : selectedDeviceArchive.value === id,
-          channels: Array.from({ length: device.channels }, (_, index) => ({
-            number: index + 1,
+      devices: g.deviceIds
+        .filter((id) => {
+          const device = websocketStore.devices?.[id]
+          if (!device) throw new Error(`Устройство ${id} не найдено`)
+          return (
+            device.name.toLocaleLowerCase().includes(query.value.toLocaleLowerCase()) ||
+            String(id) === query.value
+          )
+        })
+        .map((id) => {
+          const device = websocketStore.devices?.[id]
+          if (!device) throw new Error(`Устройство ${id} не найдено`)
+          return {
+            ...device,
+            isOpen: openedDevices.value.includes(id),
             selected:
               mode.value === 'online'
-                ? !!selectedChannelsOnline.value[id]?.includes(index + 1)
-                : !!selectedChannelsArchive.value[id]?.includes(index + 1),
-          })),
-        }
-      }),
+                ? selectedDevicesOnline.value.includes(id)
+                : selectedDeviceArchive.value === id,
+            channels: Array.from({ length: device.channels }, (_, index) => ({
+              number: index + 1,
+              selected:
+                mode.value === 'online'
+                  ? !!selectedChannelsOnline.value[id]?.includes(index + 1)
+                  : !!selectedChannelsArchive.value[id]?.includes(index + 1),
+            })),
+          }
+        }),
     }))
   })
 
@@ -138,7 +148,14 @@ export const useStore = defineStore('store', () => {
     const groupedDevices = websocketStore.groups.map((g) => g.deviceIds).flat()
 
     return Object.keys(websocketStore.devices)
-      .filter((id) => !groupedDevices.includes(Number(id)))
+      .filter(
+        (id) =>
+          !groupedDevices.includes(Number(id)) &&
+          (websocketStore.devices?.[id]?.name
+            .toLocaleLowerCase()
+            .includes(query.value.toLocaleLowerCase()) ||
+            id === query.value),
+      )
       .map((id) => {
         const numId = Number(id)
         const device = websocketStore.devices?.[id]
@@ -248,5 +265,6 @@ export const useStore = defineStore('store', () => {
     canAddNewDevice,
     devicesForMap,
     deleteDevice,
+    query,
   }
 })
