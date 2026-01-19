@@ -19,34 +19,10 @@ const STORAGE_KEYS = {
 }
 
 export const useStore = defineStore('store', () => {
+  // #region State
   const mode = ref<Mode>(loadFromStorage(STORAGE_KEYS.MODE, 'online'))
-  function changeMode(newMode: Mode) {
-    mode.value = newMode
-  }
-  function toggleMode() {
-    mode.value = mode.value === 'online' ? 'archive' : 'online'
-  }
-
-  const websocketStore = useWebsocketStore()
-
   const openedGroups = ref<string[]>(loadFromStorage(STORAGE_KEYS.OPENED_GROUPS, []))
-  function openGroupToggle(groupId: string) {
-    if (openedGroups.value.includes(groupId)) {
-      openedGroups.value = openedGroups.value.filter((id) => id !== groupId)
-    } else {
-      openedGroups.value.push(groupId)
-    }
-  }
-
   const openedDevices = ref<number[]>(loadFromStorage(STORAGE_KEYS.OPENED_DEVICES, []))
-  function openDeviceToggle(deviceId: number) {
-    if (openedDevices.value.includes(deviceId)) {
-      openedDevices.value = openedDevices.value.filter((id) => id !== deviceId)
-    } else {
-      openedDevices.value.push(deviceId)
-    }
-  }
-
   const selectedDevicesOnline = ref<number[]>(
     loadFromStorage(STORAGE_KEYS.SELECTED_DEVICES_ONLINE, []),
   )
@@ -59,6 +35,33 @@ export const useStore = defineStore('store', () => {
   const selectedChannelsArchive = ref<Record<number, number[]>>(
     loadFromStorage(STORAGE_KEYS.SELECTED_CHANNELS_ARCHIVE, {}),
   )
+
+  const websocketStore = useWebsocketStore()
+  // #endregion
+
+  // #region Actions
+  function changeMode(newMode: Mode) {
+    mode.value = newMode
+  }
+  function toggleMode() {
+    mode.value = mode.value === 'online' ? 'archive' : 'online'
+  }
+
+  function openGroupToggle(groupId: string) {
+    if (openedGroups.value.includes(groupId)) {
+      openedGroups.value = openedGroups.value.filter((id) => id !== groupId)
+    } else {
+      openedGroups.value.push(groupId)
+    }
+  }
+
+  function openDeviceToggle(deviceId: number) {
+    if (openedDevices.value.includes(deviceId)) {
+      openedDevices.value = openedDevices.value.filter((id) => id !== deviceId)
+    } else {
+      openedDevices.value.push(deviceId)
+    }
+  }
 
   function selectDevice(deviceId: number) {
     if (mode.value === 'online') {
@@ -90,6 +93,19 @@ export const useStore = defineStore('store', () => {
     }
   }
 
+  function deleteDevice(deviceId: number) {
+    websocketStore.deleteDevice(deviceId)
+
+    openedDevices.value = openedDevices.value.filter((id) => id !== deviceId)
+    selectedDevicesOnline.value = selectedDevicesOnline.value.filter((id) => id !== deviceId)
+    delete selectedChannelsOnline.value[deviceId]
+
+    selectedDeviceArchive.value = undefined
+    delete selectedChannelsArchive.value[deviceId]
+  }
+  // #endregion
+
+  // #region Getters
   const groups = computed<Group[]>(() => {
     if (!websocketStore.groups || !websocketStore.devices) return []
     return websocketStore.groups.map((g) => ({
@@ -165,18 +181,9 @@ export const useStore = defineStore('store', () => {
   })
 
   const isLoading = computed<boolean>(() => !websocketStore.groups || !websocketStore.devices)
+  // #endregion
 
-  function deleteDevice(deviceId: number) {
-    websocketStore.deleteDevice(deviceId)
-
-    openedDevices.value = openedDevices.value.filter((id) => id !== deviceId)
-    selectedDevicesOnline.value = selectedDevicesOnline.value.filter((id) => id !== deviceId)
-    delete selectedChannelsOnline.value[deviceId]
-
-    selectedDeviceArchive.value = undefined
-    delete selectedChannelsArchive.value[deviceId]
-  }
-
+  // #region Watchers
   watch(mode, (newMode) => {
     saveToStorage(STORAGE_KEYS.MODE, newMode)
   })
@@ -224,6 +231,7 @@ export const useStore = defineStore('store', () => {
     },
     { deep: true },
   )
+  // #endregion
 
   return {
     isLoading,

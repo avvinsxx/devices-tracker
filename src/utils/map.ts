@@ -10,8 +10,8 @@ export const calculateDeviceBounds = (devices: DeviceMap[]) => {
   const lons = devices.map((d) => d.lon)
 
   return [
-    [Math.min(...lats), Math.min(...lons)],
-    [Math.max(...lats), Math.max(...lons)],
+    [Math.min(...lats) - 0.1, Math.min(...lons) - 0.1],
+    [Math.max(...lats) + 0.1, Math.max(...lons) + 0.1],
   ]
 }
 
