@@ -23,10 +23,11 @@ const props = defineProps<{ active: boolean }>()
   height: 24px;
   width: 24px;
   border-radius: 24px;
-  background-color: lightsteelblue;
+  background-color: var(--color-accent);
   position: absolute;
   top: 2px;
   left: 2px;
+  transition: transform 0.3s;
 }
 
 .switcher__check_active {

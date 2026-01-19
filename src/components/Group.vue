@@ -26,6 +26,7 @@ function onOpen() {
       <CaretIcon :size="16" class="group__caret" :class="{ group__caret_open: group.isOpen }" />
     </div>
     <div v-if="group.isOpen" class="group__body">
+      <div v-if="group.devices.length === 0" class="group__empty">Нет устройств</div>
       <Device v-for="device in group.devices" :device="device" :key="device.id" />
     </div>
   </div>
@@ -51,6 +52,10 @@ function onOpen() {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+}
+
+.group__empty {
+  text-align: center;
 }
 
 .group__caret {

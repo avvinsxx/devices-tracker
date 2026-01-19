@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { useStore } from '@/stores/store'
 import Device from './Device.vue'
 import Group from './Group.vue'
+import Loader from './Loader.vue'
 import Mode from './Mode.vue'
-import { useStore } from '@/stores/store'
 
 const store = useStore()
 </script>
@@ -12,8 +13,11 @@ const store = useStore()
     <Mode class="sidebar__mode" />
 
     <div class="sidebar__devices">
-      <Group v-for="group in store.groups" :key="group.id" :group="group" />
-      <Device v-for="device in store.ungroupedDevices" :key="device.id" :device />
+      <div v-if="store.isLoading" class="sidebar__loaderContainer"><Loader /></div>
+      <template v-else>
+        <Group v-for="group in store.groups" :key="group.id" :group="group" />
+        <Device v-for="device in store.ungroupedDevices" :key="device.id" :device />
+      </template>
     </div>
   </div>
 </template>
@@ -41,5 +45,9 @@ const store = useStore()
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
+}
+
+.sidebar__loaderContainer {
+  text-align: center;
 }
 </style>
