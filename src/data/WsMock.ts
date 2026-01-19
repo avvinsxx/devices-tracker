@@ -1,4 +1,23 @@
-export const groups = [
+export class WSMock {
+  private onMessagesCallbacks: ((message: string) => void)[] = []
+
+  onMessage(cb: (message: string) => void) {
+    this.onMessagesCallbacks.push(cb)
+  }
+
+  connect() {
+    setTimeout(() => {
+      this.onMessagesCallbacks.forEach((cb) => cb(JSON.stringify({ type: 'groups', data: groups })))
+    }, 1000)
+    setTimeout(() => {
+      this.onMessagesCallbacks.forEach((cb) =>
+        cb(JSON.stringify({ type: 'devices', data: devices })),
+      )
+    }, 2000)
+  }
+}
+
+const groups = [
   {
     id: 'g1',
     name: 'Группа Север',
@@ -11,7 +30,7 @@ export const groups = [
   },
 ]
 
-export const devices = {
+const devices = {
   1: {
     id: 1,
     name: 'Регистратор Север-1',

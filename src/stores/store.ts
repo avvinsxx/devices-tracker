@@ -1,10 +1,10 @@
 import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
 
-import { groups as wsGroups, devices as wsDevices } from '@/data/WsService'
 import { type Group } from '@/types/group'
 import type { Device, DeviceMap } from '@/types/device'
 import { loadFromStorage, saveToStorage } from '@/utils/localStorage'
+import { useWebsocketStore } from './websocketStore'
 
 type Mode = 'online' | 'archive'
 
@@ -23,10 +23,11 @@ export const useStore = defineStore('store', () => {
   function changeMode(newMode: Mode) {
     mode.value = newMode
   }
-
   function toggleMode() {
     mode.value = mode.value === 'online' ? 'archive' : 'online'
   }
+
+  const websocketStore = useWebsocketStore()
 
   const openedGroups = ref<string[]>(loadFromStorage(STORAGE_KEYS.OPENED_GROUPS, []))
   function openGroupToggle(groupId: string) {
@@ -90,47 +91,55 @@ export const useStore = defineStore('store', () => {
   }
 
   const groups = computed<Group[]>(() => {
-    return wsGroups.map((g) => ({
+    if (!websocketStore.groups || !websocketStore.devices) return []
+    return websocketStore.groups.map((g) => ({
       ...g,
       isOpen: openedGroups.value.includes(g.id),
-      devices: g.deviceIds.map((id) => ({
-        ...wsDevices[id],
-        isOpen: openedDevices.value.includes(id),
-        selected:
-          mode.value === 'online'
-            ? selectedDevicesOnline.value.includes(id)
-            : selectedDeviceArchive.value === id,
-        channels: Array.from({ length: wsDevices[id].channels }, (_, index) => ({
-          number: index + 1,
+      devices: g.deviceIds.map((id) => {
+        const device = websocketStore.devices?.[id]
+        if (!device) throw new Error(`Устройство ${id} не найдено`)
+        return {
+          ...device,
+          isOpen: openedDevices.value.includes(id),
           selected:
             mode.value === 'online'
-              ? selectedChannelsOnline.value[id]?.includes(index + 1)
-              : selectedChannelsArchive.value[id]?.includes(index + 1),
-        })),
-      })),
+              ? selectedDevicesOnline.value.includes(id)
+              : selectedDeviceArchive.value === id,
+          channels: Array.from({ length: device.channels }, (_, index) => ({
+            number: index + 1,
+            selected:
+              mode.value === 'online'
+                ? !!selectedChannelsOnline.value[id]?.includes(index + 1)
+                : !!selectedChannelsArchive.value[id]?.includes(index + 1),
+          })),
+        }
+      }),
     }))
   })
 
   const ungroupedDevices = computed<Device[]>(() => {
-    const groupedDevices = wsGroups.map((g) => g.deviceIds).flat()
+    if (!websocketStore.groups || !websocketStore.devices) return []
+    const groupedDevices = websocketStore.groups.map((g) => g.deviceIds).flat()
 
-    return Object.keys(wsDevices)
+    return Object.keys(websocketStore.devices)
       .filter((id) => !groupedDevices.includes(Number(id)))
       .map((id) => {
         const numId = Number(id)
+        const device = websocketStore.devices?.[id]
+        if (!device) throw new Error(`Устройство ${id} не найдено`)
         return {
-          ...wsDevices[id],
+          ...device,
           isOpen: openedDevices.value.includes(numId),
           selected:
             mode.value === 'online'
               ? selectedDevicesOnline.value.includes(numId)
               : selectedDeviceArchive.value === numId,
-          channels: Array.from({ length: wsDevices[numId].channels }, (_, index) => ({
+          channels: Array.from({ length: device.channels }, (_, index) => ({
             number: index + 1,
             selected:
               mode.value === 'online'
-                ? selectedChannelsOnline.value[numId]?.includes(index + 1)
-                : false,
+                ? !!selectedChannelsOnline.value[numId]?.includes(index + 1)
+                : !!selectedChannelsArchive.value[id]?.includes(index + 1),
           })),
         }
       })
@@ -141,14 +150,32 @@ export const useStore = defineStore('store', () => {
   })
 
   const devicesForMap = computed<DeviceMap[]>(() => {
-    return Object.keys(wsDevices)
+    if (!websocketStore.devices) return []
+    return Object.keys(websocketStore.devices)
       .filter((id) =>
         mode.value === 'online'
           ? selectedDevicesOnline.value.includes(Number(id))
           : selectedDeviceArchive.value === Number(id),
       )
-      .map((id) => wsDevices[Number(id)])
+      .map((id) => {
+        const device = websocketStore.devices?.[id]
+        if (!device) throw new Error(`Устройство ${id} не найдено`)
+        return device
+      })
   })
+
+  const isLoading = computed<boolean>(() => !websocketStore.groups || !websocketStore.devices)
+
+  function deleteDevice(deviceId: number) {
+    websocketStore.deleteDevice(deviceId)
+
+    openedDevices.value = openedDevices.value.filter((id) => id !== deviceId)
+    selectedDevicesOnline.value = selectedDevicesOnline.value.filter((id) => id !== deviceId)
+    delete selectedChannelsOnline.value[deviceId]
+
+    selectedDeviceArchive.value = undefined
+    delete selectedChannelsArchive.value[deviceId]
+  }
 
   watch(mode, (newMode) => {
     saveToStorage(STORAGE_KEYS.MODE, newMode)
@@ -199,6 +226,7 @@ export const useStore = defineStore('store', () => {
   )
 
   return {
+    isLoading,
     selectedDevicesOnline,
     mode,
     changeMode,
@@ -211,5 +239,6 @@ export const useStore = defineStore('store', () => {
     selectChannel,
     canAddNewDevice,
     devicesForMap,
+    deleteDevice,
   }
 })
